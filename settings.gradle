@@ -1,0 +1,8 @@
+rootProject.name = 'templet-java'
+
+include 'testExamples'
+include 'actorModel'
+
+project(':testExamples').projectDir = "$rootDir/testExamples" as File
+project(':actorModel').projectDir = "$rootDir/actorModel" as File
+
