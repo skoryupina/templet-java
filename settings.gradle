@@ -2,7 +2,9 @@ rootProject.name = 'templet-java'
 
 include 'testExamples'
 include 'actorModel'
+include 'akkaActorModel'
 
 project(':testExamples').projectDir = "$rootDir/testExamples" as File
 project(':actorModel').projectDir = "$rootDir/actorModel" as File
+findProject(':akkaActorModel')?.name = 'akka-test'
 
