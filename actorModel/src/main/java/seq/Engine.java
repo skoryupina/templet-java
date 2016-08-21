@@ -4,16 +4,28 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class Engine {
-    public Queue<Message> ready = new LinkedList<>();
-    ;
+
+    /**
+     * Очередь сообщений, готовых к обработке акторами.
+     */
+    private final Queue<Message> ready = new LinkedList<>();
+
+    Queue<Message> getReady() {
+        return ready;
+    }
 
     public void run() {
-        while (ready.size() != 0) {
-            System.out.println("Queue size" + ready.size());
-            Message c = ready.poll();
-            c.sending = false;
-            c.actor.recv(c, c.actor);
+//        while (ready.size() != 0) {
+        while (true) {
+            {
+                if (!ready.isEmpty()) {
+                    synchronized (ready) {
+                        Message message = ready.poll();
+                        message.sending = false;
+                        message.actor.recv(message, message.actor);
+                    }
+                }
+            }
         }
-        System.out.println("Finished" + ready.size());
     }
 }

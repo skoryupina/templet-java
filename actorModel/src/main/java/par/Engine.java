@@ -27,17 +27,17 @@ import java.util.concurrent.Executors;
 public class Engine {
 
     /**
-     * Число потоков в пуле
+     * Число потоков в пуле.
      */
     private static final int CAPACITY = 2;
 
     /**
-     * Число потоков, активных в определенный момент времени
+     * Число потоков, активных в определенный момент времени.
      */
     private volatile int active;
 
     /**
-     * Очередь потоков, готовых к исполнению
+     * Очередь сообщений, готовых к обработке акторами.
      */
     private final Queue<Message> ready = new LinkedList<>();
 

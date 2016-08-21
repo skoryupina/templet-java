@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class Message {
     /**
-     * Актор-отправитель сообщения.
+     * Актор-получатель сообщения.
      */
     private Actor actor;
 
@@ -31,7 +31,7 @@ public class Message {
     private boolean sending;
 
     /**
-     * Передать сообщение.
+     * Передать сообщение в очередь сообщений.
      *
      * @param engine Движок - среда обитания акторов.
      * @param actor  Получатель сообщения.
@@ -56,7 +56,7 @@ public class Message {
     }
 
     /**
-     * Получить актора сообщения.
+     * Получить актора-получателя сообщения.
      */
     @Nullable
     Actor getActor() {
