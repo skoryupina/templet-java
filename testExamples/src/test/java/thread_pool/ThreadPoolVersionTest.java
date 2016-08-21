@@ -12,11 +12,10 @@
 /*  See the License for the specific language governing permissions and     */
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
-
+package thread_pool;
 import org.junit.Before;
 import org.junit.Test;
 import par.Engine;
-import thread_pool.ThreadPoolVersion;
 
 import static org.junit.Assert.assertEquals;
 
