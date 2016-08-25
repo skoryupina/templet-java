@@ -1,50 +1,53 @@
+/*  Copyright 2015 Sergey Vostokin, Ekaterina Skoryupina                    */
+/*                                                                          */
+/*  Licensed under the Apache License, Version 2.0 (the "License");         */
+/*  you may not use this file except in compliance with the License.        */
+/*  You may obtain a copy of the License at                                 */
+/*                                                                          */
+/*  http://www.apache.org/licenses/LICENSE-2.0                              */
+/*                                                                          */
+/*  Unless required by applicable law or agreed to in writing, software     */
+/*  distributed under the License is distributed on an "AS IS" BASIS,       */
+/*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.*/
+/*  See the License for the specific language governing permissions and     */
+/*  limitations under the License.                                          */
+/*--------------------------------------------------------------------------*/
 package gauss_seidel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import seq.Actor;
 import seq.Engine;
 import seq.Message;
 
-import java.util.Random;
-
 public class ActorVersion {
+    static Logger LOG = LoggerFactory.getLogger(ActorVersion.class);
+
     public static Actor[] a;
     public static MessageGauss[] m;
-    public static final int ITERATIONS = 10000;
-    //todo: t служит для отметки моментов времени
+    //служит для отметки моментов времени
     public static int[] t;
-    private static double[][] uAct;
-    public static final int SIZE_X = 800;
-    public static final int SIZE_Y = 80;
+    private static double[][] u;
     //todo:
-    public static final int N = SIZE_Y - 2;
+    public static final int N = InputMatrixHelper.SIZE_Y - 2;
 
-    /***
-     * Инициализация массива
-     */
-    public static void init() {
-        uAct = new double[SIZE_X][SIZE_Y];
-        Random random = new Random();
-        for (int i = 0; i < SIZE_X; i++) {
-            for (int j = 0; j < SIZE_Y; j++) {
-                uAct[i][j] = random.nextDouble();
-            }
-        }
-    }
 
-    public static void calcWithActors() {
-        init();
+    public static void calcWithActors(double[][] u) {
         Engine engine = new Engine();
-        a = new AgentGaussSeidel[N];
+        a = new GaussSeidelActor[N];
+//        LOG.debug("a size " + a.length);
         m = new MessageGauss[N - 1];
+//        LOG.debug("m size " + m.length);
         t = new int[N];
+//        LOG.debug("t size " + t.length);
+        ActorVersion.u = u;
 
         /***
          * Инициализация массива акторов
          */
         for (int i = 0; i < N; i++) {
-            a[i] = new AgentGaussSeidel();
+            a[i] = new GaussSeidelActor();
             a[i].engine = engine;
-            //todo: int t[N]={1}
             t[i] = 1;
         }
 
@@ -52,47 +55,62 @@ public class ActorVersion {
          * Инициализация массива сообщений
          */
         for (int i = 0; i < N - 1; i++) {
-            m[i] = new MessageGauss();
+            m[i] = new MessageGauss(i);
             m[i].send(engine, m[i], a[i]); //отправляем сообщение i-му актору
             m[i].sending = (i == 0);
         }
-        a[0].engine.run();
+        engine.run();
     }
 
-    static class AgentGaussSeidel extends Actor {
+    static class GaussSeidelActor extends Actor {
 
         @Override
         public void recv(Message message, Actor actor) {
             MessageGauss msg = (MessageGauss) message;
             int i = msg.getX();
+            LOG.debug("i== {}", i);
             if ((i == 0 ||
                     message.access(m[i - 1], a[i]) &&
                             (i == N - 1 || message.access(m[i], a[i])) &&
-                            (t[i] <= ITERATIONS))) {
-                operation(i + 1, uAct);
+                            (t[i] <= InputMatrixHelper.ITERATIONS))) {
+                operation(i + 1);
                 t[i]++;
                 if (i != 0) {
                     message.send(a[i - 1].engine, m[i - 1], a[i - 1]);
                 }
                 if (i != N - 1) {
+                    ((MessageGauss) message).from = "i != N - 1";
                     message.send(a[i + 1].engine, m[i], a[i + 1]);
+                    LOG.debug(((MessageGauss) message).from);
                 }
             }
         }
 
     }
 
-    static class MessageGauss extends Message {
+    private static class MessageGauss extends Message {
         int x;
 
-        public int getX() {
+        MessageGauss(int i) {
+            x = i;
+        }
+
+        String from;
+
+        int getX() {
             return x;
         }
     }
 
-    public static void operation(int i, double[][] u) {
-        for (int j = 1; j < SIZE_Y - 1; j++)
+    private static void operation(int i) {
+        for (int j = 1; j < InputMatrixHelper.SIZE_Y - 1; j++) {
+//            LOG.debug("i= {} j= {}", i, j);
+//            LOG.debug("u[i][j - 1] {}", u[i][j - 1]);
+//            LOG.debug(" u[i][j + 1] {}",  u[i][j + 1]);
+//            LOG.debug("u[i - 1][j] {}", u[i - 1][j]);
+//            LOG.debug("u[i + 1][j] {}", u[i + 1][j]);
             u[i][j] = (u[i][j - 1] + u[i][j + 1] + u[i - 1][j] + u[i + 1][j]) * 0.25;
+        }
     }
 
 }
