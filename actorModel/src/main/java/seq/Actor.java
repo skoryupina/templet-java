@@ -20,6 +20,7 @@ public abstract class Actor implements Runnable {
     public abstract void recv(Message message, Actor actor);
 
     public void run() {
+        //todo Доработать логику
         for (; ; ) {
         }
     }

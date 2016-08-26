@@ -49,6 +49,8 @@ public class ActorVersion {
             a[i] = new GaussSeidelActor();
             a[i].engine = engine;
             t[i] = 1;
+            Thread thread = new Thread(a[i]);
+            thread.start();
         }
 
         /***

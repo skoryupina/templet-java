@@ -42,7 +42,7 @@ public class Engine {
                         Message message = ready.poll();
                         LOG.debug("ready size after {}", ready.size());
                         message.sending = false;
-
+                        //todo Доработать логику - из одного потока вызываем метод другого
                         message.actor.recv(message, message.actor);
                     }
                 }
