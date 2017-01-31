@@ -33,20 +33,12 @@ public class Engine {
     }
 
     public void run() {
-//        while (ready.size() != 0) {
-        while (true) {
-            {
-                if (!ready.isEmpty()) {
-                    synchronized (ready) {
-                        LOG.debug("ready size {}", ready.size());
-                        Message message = ready.poll();
-                        LOG.debug("ready size after {}", ready.size());
-                        message.sending = false;
-                        //todo Доработать логику - из одного потока вызываем метод другого
-                        message.actor.recv(message, message.actor);
-                    }
+        while (ready.size() != 0) {
+            synchronized (ready) {
+                Message message = ready.poll();
+                message.sending = false;
+                message.actor.recv(message, message.actor);
                 }
-            }
         }
     }
 }

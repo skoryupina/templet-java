@@ -20,6 +20,8 @@ import seq.Actor;
 import seq.Engine;
 import seq.Message;
 
+import java.util.Arrays;
+
 public class ActorVersion {
     static Logger LOG = LoggerFactory.getLogger(ActorVersion.class);
 
@@ -45,12 +47,11 @@ public class ActorVersion {
         /***
          * Инициализация массива акторов
          */
+
         for (int i = 0; i < N; i++) {
             a[i] = new GaussSeidelActor();
-            a[i].engine = engine;
+            a[i].id = i;
             t[i] = 1;
-            Thread thread = new Thread(a[i]);
-            thread.start();
         }
 
         /***
@@ -58,9 +59,17 @@ public class ActorVersion {
          */
         for (int i = 0; i < N - 1; i++) {
             m[i] = new MessageGauss(i);
+            m[i].id = i;
             m[i].send(engine, m[i], a[i]); //отправляем сообщение i-му актору
             m[i].sending = (i == 0);
         }
+
+
+        Arrays.stream(a).forEach(i -> {
+            i.engine = engine;
+            Thread thread = new Thread(i);
+            thread.start();
+        });
         engine.run();
     }
 
@@ -68,13 +77,14 @@ public class ActorVersion {
 
         @Override
         public void recv(Message message, Actor actor) {
+            LOG.error("actor " + actor.id);
             MessageGauss msg = (MessageGauss) message;
             int i = msg.getX();
             LOG.debug("i== {}", i);
             if ((i == 0 ||
-                    message.access(m[i - 1], a[i]) &&
+                    message.access(m[i - 1], a[i])) &&
                             (i == N - 1 || message.access(m[i], a[i])) &&
-                            (t[i] <= InputMatrixHelper.ITERATIONS))) {
+                    (t[i] <= InputMatrixHelper.ITERATIONS)) {
                 operation(i + 1);
                 t[i]++;
                 if (i != 0) {

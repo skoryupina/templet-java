@@ -16,13 +16,12 @@ package seq;
 
 public abstract class Actor implements Runnable {
     public Engine engine;
+    //для отладки
+    public int id;
 
     public abstract void recv(Message message, Actor actor);
 
     public void run() {
-        //todo Доработать логику
-        for (; ; ) {
-        }
     }
 
     @Override

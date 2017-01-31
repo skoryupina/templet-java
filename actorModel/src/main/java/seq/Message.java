@@ -28,6 +28,8 @@ public class Message {
      */
     public Actor actor;
 
+    public int id;
+
     /**
      * Статус сообщения.
      */
@@ -40,14 +42,11 @@ public class Message {
      * @param actor  Получатель сообщения.
      */
     public void send(Engine engine, Message message, Actor actor) {
-        if (message.sending) {
-            return;
-        }
         synchronized (engine.getReady()) {
             message.sending = true;
             message.actor = actor;
             engine.getReady().add(message);
-            LOG.debug("Добавили в очередь message");
+            LOG.debug("size: {} Добавили в очередь message id: {} actorID: {} ", engine.getReady().size(), message.id, actor.id);
         }
     }
 
