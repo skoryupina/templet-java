@@ -42,11 +42,12 @@ public class Message {
      * @param actor  Получатель сообщения.
      */
     public void send(Engine engine, Message message, Actor actor) {
+        LOG.debug("---   " + actor.id);
         synchronized (engine.getReady()) {
             message.sending = true;
             message.actor = actor;
             engine.getReady().add(message);
-            LOG.debug("size: {} Добавили в очередь message id: {} actorID: {} ", engine.getReady().size(), message.id, actor.id);
+            LOG.debug("size: {} Добавили в очередь message id: {} messageActor: {} actorID: {} ", engine.getReady().size(), message.id, message.actor.id, actor.id);
         }
     }
 
@@ -60,6 +61,7 @@ public class Message {
      * @return Есть ли право доступа.
      */
     public boolean access(Message message, Actor actor) {
+        LOG.debug("message.actor==actor {} : {} !message.sending {} ", message.actor.id, actor.id, !message.sending);
         return message.actor == actor && !message.sending;
     }
 

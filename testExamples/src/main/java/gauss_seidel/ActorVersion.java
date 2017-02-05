@@ -20,8 +20,6 @@ import seq.Actor;
 import seq.Engine;
 import seq.Message;
 
-import java.util.Arrays;
-
 public class ActorVersion {
     static Logger LOG = LoggerFactory.getLogger(ActorVersion.class);
 
@@ -52,6 +50,9 @@ public class ActorVersion {
             a[i] = new GaussSeidelActor();
             a[i].id = i;
             t[i] = 1;
+            a[i].engine = engine;
+            Thread thread = new Thread(a[i], String.valueOf(a[i].id));
+            thread.start();
         }
 
         /***
@@ -64,12 +65,6 @@ public class ActorVersion {
             m[i].sending = (i == 0);
         }
 
-
-        Arrays.stream(a).forEach(i -> {
-            i.engine = engine;
-            Thread thread = new Thread(i);
-            thread.start();
-        });
         engine.run();
     }
 
@@ -78,6 +73,7 @@ public class ActorVersion {
         @Override
         public void recv(Message message, Actor actor) {
             LOG.error("actor " + actor.id);
+            LOG.debug(Thread.currentThread().getName());
             MessageGauss msg = (MessageGauss) message;
             int i = msg.getX();
             LOG.debug("i== {}", i);
@@ -88,11 +84,13 @@ public class ActorVersion {
                 operation(i + 1);
                 t[i]++;
                 if (i != 0) {
+                    LOG.debug(Thread.currentThread().getName() + " vetv i != 0 ");
                     message.send(a[i - 1].engine, m[i - 1], a[i - 1]);
                 }
                 if (i != N - 1) {
+                    LOG.debug(Thread.currentThread().getName() + " vetv i != N - 1");
                     ((MessageGauss) message).from = "i != N - 1";
-                    message.send(a[i + 1].engine, m[i], a[i + 1]);
+                    message.send(a[i + 1].engine, m[i + 1], a[i + 1]);
                     LOG.debug(((MessageGauss) message).from);
                 }
             }
@@ -116,11 +114,6 @@ public class ActorVersion {
 
     private static void operation(int i) {
         for (int j = 1; j < InputMatrixHelper.SIZE_Y - 1; j++) {
-//            LOG.debug("i= {} j= {}", i, j);
-//            LOG.debug("u[i][j - 1] {}", u[i][j - 1]);
-//            LOG.debug(" u[i][j + 1] {}",  u[i][j + 1]);
-//            LOG.debug("u[i - 1][j] {}", u[i - 1][j]);
-//            LOG.debug("u[i + 1][j] {}", u[i + 1][j]);
             u[i][j] = (u[i][j - 1] + u[i][j + 1] + u[i - 1][j] + u[i + 1][j]) * 0.25;
         }
     }

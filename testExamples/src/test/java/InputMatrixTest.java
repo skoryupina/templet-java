@@ -12,8 +12,8 @@
 /*  See the License for the specific language governing permissions and     */
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
+
 import gauss_seidel.InputMatrixHelper;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +21,14 @@ import org.slf4j.LoggerFactory;
 public class InputMatrixTest {
 
     private static Logger LOG = LoggerFactory.getLogger(InputMatrixTest.class);
-    private static final String FILENAME = "matrix.dat";
+    private static final String FILENAME = "actorResult.dat";
 
-    @Before
-    public void beforeTests() {
-        InputMatrixHelper matrix = new InputMatrixHelper();
-        matrix.init();
-        InputMatrixHelper.serializeMatrix(FILENAME, matrix);
-    }
+//    @Before
+//    public void beforeTests() {
+//        InputMatrixHelper matrix = new InputMatrixHelper();
+//        matrix.init();
+//        InputMatrixHelper.serializeMatrix(FILENAME, matrix);
+//    }
 
 
     @Test
