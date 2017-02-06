@@ -4,6 +4,7 @@ import akka.actor.UntypedActor;
 import newtemplet.Main;
 
 import static newtemplet.Main.N;
+import static newtemplet.Main.engine;
 
 public class ActorBase extends UntypedActor {
 
@@ -20,11 +21,11 @@ public class ActorBase extends UntypedActor {
     @Override
     public final void onReceive(Object o) throws Exception {
         MessageBase message = (MessageBase) o;
-        MessageBase.access(message, this);
+        MessageBase.access(message, getSelf());
 
         if ((id == 0 ||
-                MessageBase.access(Main.messages[id - 1], this)) &&
-                (id == N - 1 || MessageBase.access(Main.messages[id], this)) &&
+                MessageBase.access(Main.messages[id - 1], getSelf())) &&
+                (id == N - 1 || MessageBase.access(Main.messages[id], getSelf())) &&
                 (Main.time[id] <= Main.T)) {
             Main.operation(id + 1);
             Main.time[id]++;
@@ -35,6 +36,8 @@ public class ActorBase extends UntypedActor {
             if (id != Main.N - 1) {
                 MessageBase.send(Main.engine, Main.messages[id], Main.actors[id + 1]);
             }
+        } else {
+            engine.isFinished = true;
         }
     }
 }

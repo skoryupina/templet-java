@@ -1,6 +1,8 @@
 package newtemplet;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
 import newtemplet.akka.ActorBase;
 import newtemplet.akka.Engine;
 import newtemplet.akka.MessageBase;
@@ -32,12 +34,14 @@ public class Main {
     double obs_tet[];
     double tet_max, tet_mid, tet_min;
 
-    public static Engine engine;
-    public static ActorBase actors[] = new ActorBase[N];
+    public static Engine engine = new Engine();
+    public static ActorRef actors[] = new ActorRef[N];
     public static MessageBase messages[] = new MessageBase[N - 1];
     public static int time[] = new int[N];
+    final static ActorSystem system = ActorSystem.create("MySystem");
 
-    public void shufle() {
+
+    public static void shufle() {
         Random random = new Random();
         for (int i = 0; i < H; i++) {
             for (int j = 0; j < W; j++) {
@@ -48,49 +52,14 @@ public class Main {
         }
     }
 
-    void op(int i) {
-        for (int j = 1; j < W - 1; j++)
-            field[i][j] = (field[i][j - 1] + field[i][j + 1] +
-                    field[i - 1][j] + field[i + 1][j]) * 0.25;
-    }
-
-
-    void op1(int i) {
-        for (int j = 1; j < W - 1; j++)
-            field1[i][j] = (field1[i][j - 1] + field1[i][j + 1] +
-                    field1[i - 1][j] + field1[i + 1][j]) * 0.25;
-    }
-
-    double seq_alg() {
+    static double seq_alg() {
         double time = System.currentTimeMillis();
 
         for (int t = 1; t <= T; t++)
-            for (int i = 1; i < H - 1; i++) op1(i);
+            for (int i = 1; i < H - 1; i++) operation(i);
 
         return System.currentTimeMillis() - time;
     }
-
-    double par_omp() {
-        double time = System.currentTimeMillis();
-        for (int t = 1; t <= (2 * T - 1) + (H - 3); t++) {
-            if (t % 2 == 1) {
-                int finalT = t;
-                new Thread(() -> {
-                    for (int i = 1; i < H - 1; i += 2)
-                        if (i <= finalT && i > finalT - 2 * T) op(i);
-                });
-            }
-            if (t % 2 == 0) {
-                int finalT1 = t;
-                new Thread(() -> {
-                    for (int i = 2; i < H - 1; i += 2)
-                        if (i <= finalT1 && i > finalT1 - 2 * T) op(i);
-                });
-            }
-        }
-        return System.currentTimeMillis() - time;
-    }
-
 
     boolean compare() {
         for (int i = 0; i < H; i++)
@@ -125,63 +94,27 @@ public class Main {
         }
     }
 
-    void tfunc(Engine engine) {
-        MessageBase message;
-        ActorRef actor;
-
-        for (; ; ) {
-            synchronized (engine) {
-                while (engine.getReady().isEmpty()) {
-                    engine.setActive(engine.getActive() - 1);
-                    if (!(engine.getActive() == 0)) {
-                        engine.notify();
-                        return;
-                    }
-                    try {
-                        engine.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    engine.setActive(engine.getActive() + 1);
-                }
-                message = engine.getReady().poll();
-            }
-            actor = message.getActor();
-            synchronized (actor) {
-                message.setSending(false);
-                actor.tell(message, actor);
-            }
-        }
-    }
-
-    double run(Engine engine) {
-//        int n = 1;
-//        Thread[] threads = new Thread[n];
-//        engine.setActive(n);
-//        for (int i = 0; i<n; i++) {
-//            threads[i] = std::thread
-//        }(tfunc, e);
-        double time = System.currentTimeMillis();
-//        double start = omp_get_wtime();
-//        for (auto& th : threads) th.join();
-        return System.currentTimeMillis() - time;
-    }
-
-    double par_tet() {
+    static double par_tet() {
         for (int i = 0; i < N; i++) {
-            actors[i] = new ActorBase(i);
+            actors[i] = system.actorOf(Props.create(ActorBase.class, i));
             time[i] = 1;
         }
         for (int i = 0; i < N - 1; i++) {
+            messages[i] = new MessageBase();
             messages[i].setActor(actors[i]);
             messages[i].setSending(false);
         }
         MessageBase.send(engine, messages[0], actors[0]);
 
-        return run(engine);
+        return engine.run();
     }
 
     public static void main(String[] args) {
+        shufle();
+        seq_alg();
+        System.out.println(par_tet());
+        System.out.println("Print");
+
 //            for (int i = 0; i < OBS_N; i++){
 //                shufle_seq();	obs_seq[i] = seq_alg();
 //                shufle();	obs_omp[i] = par_omp(); cout << (compare() ? "OMP Ok " : "something wrong in OMP ");

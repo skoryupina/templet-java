@@ -1,5 +1,7 @@
 package newtemplet.akka;
 
+import akka.actor.ActorRef;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -25,6 +27,23 @@ public class Engine {
 
     public void setActive(int active) {
         this.active = active;
+    }
+
+    public boolean isFinished = false;
+
+    public double run() {
+        double time = System.currentTimeMillis();
+        while (!isFinished) {
+            if (ready.size() != 0) {
+                synchronized (ready) {
+                    MessageBase message = ready.poll();
+                    message.setSending(false);
+                    ActorRef self = message.getActor();
+                    self.tell(message, self);
+                }
+            }
+        }
+        return System.currentTimeMillis() - time;
     }
 
 }

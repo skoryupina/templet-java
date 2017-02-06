@@ -29,18 +29,16 @@ public class MessageBase implements Serializable {
         this.sending = sending;
     }
 
-    public MessageBase(ActorRef actor, boolean sending) {
-        this.actor = actor;
-        this.sending = sending;
+    public MessageBase() {
+
     }
 
     public static void send(Engine engine, MessageBase message, ActorRef actor) {
-        if (message.isSending()) return;
+        if (message.isSending())
+            return;
         message.setSending(true);
         message.setActor(actor);
         engine.getReady().add(message);
-
-        // todo how to implement e->cv.notify_one();
     }
 
     public static boolean access(MessageBase message, ActorRef actor) {
