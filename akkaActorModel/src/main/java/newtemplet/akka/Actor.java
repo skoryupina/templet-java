@@ -18,7 +18,7 @@ public class Actor extends UntypedActor {
 
     @Override
     public final void onReceive(Object message) throws Exception {
-
+        System.out.println("************** #id" + id);
         if (((Integer) message) == id - 1) access_ms_id_minus_1 = true;
         if (((Integer) message) == id) access_ms_id = true;
         System.out.println("#id" + id + "    id-1 " + access_ms_id_minus_1 + " access_ms_id" + access_ms_id);
@@ -32,12 +32,12 @@ public class Actor extends UntypedActor {
 
             if (id != 0) {
                 System.out.println("tell id# " + Main.actors[id - 1]);
-                getSelf().tell(id - 1, Main.actors[id - 1]);
+                Main.actors[id - 1].tell(id - 1, getSelf());
                 access_ms_id_minus_1 = false;
             }
             if (id != Main.N - 1) {
                 System.out.println("tell id# " + Main.actors[id + 1]);
-                getSelf().tell(id, Main.actors[id + 1]);
+                Main.actors[id + 1].tell(id, getSelf());
                 access_ms_id = false;
             }
         } else if (Main.time[id] > Main.T) {
