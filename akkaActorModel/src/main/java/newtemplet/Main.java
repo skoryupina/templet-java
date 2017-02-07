@@ -56,15 +56,19 @@ public class Main {
         double time = System.currentTimeMillis();
 
         for (int t = 1; t <= T; t++)
-            for (int i = 1; i < H - 1; i++) operation(i);
+            for (int i = 1; i < H - 1; i++) operation1(i);
 
         return System.currentTimeMillis() - time;
     }
 
-    boolean compare() {
+    static boolean compare() {
         for (int i = 0; i < H; i++)
             for (int j = 0; j < W; j++)
-                if (field1[i][j] != field[i][j]) return false;
+                if (field1[i][j] != field[i][j]) {
+                    System.out.println(field1[i][j]);
+                    System.out.println(field[i][j]);
+                    return false;
+                }
         return true;
     }
 
@@ -88,6 +92,12 @@ public class Main {
         tet_mid = (tet_min + tet_max) / 2;
     }
 
+    public static void operation1(int i) {
+        for (int j = 1; j < W - 1; j++) {
+            field1[i][j] = (field1[i][j - 1] + field1[i][j + 1] + field1[i - 1][j] + field1[i + 1][j]) * 0.25;
+        }
+    }
+
     public static void operation(int i) {
         for (int j = 1; j < W - 1; j++) {
             field[i][j] = (field[i][j - 1] + field[i][j + 1] + field[i - 1][j] + field[i + 1][j]) * 0.25;
@@ -105,6 +115,7 @@ public class Main {
             messages[i].setSending(false);
         }
         MessageBase.send(engine, messages[0], actors[0]);
+        engine.setActive(N);
 
         return engine.run();
     }
@@ -113,7 +124,7 @@ public class Main {
         shufle();
         seq_alg();
         System.out.println(par_tet());
-        System.out.println("Print");
+        System.out.println("equals " + compare());
 
 //            for (int i = 0; i < OBS_N; i++){
 //                shufle_seq();	obs_seq[i] = seq_alg();

@@ -4,13 +4,14 @@ import akka.actor.ActorRef;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Engine {
 
     /**
      * Число потоков, активных в определенный момент времени.
      */
-    private volatile int active;
+    private AtomicInteger active;
 
     /**
      * Очередь сообщений, готовых к обработке акторами.
@@ -22,18 +23,22 @@ public class Engine {
     }
 
     public int getActive() {
-        return active;
+        return active.get();
     }
 
-    public void setActive(int active) {
-        this.active = active;
+    public void decreaseActive() {
+        active.getAndDecrement();
     }
 
-    public boolean isFinished = false;
+    public void setActive(int n) {
+        active.set(n);
+    }
 
     public double run() {
         double time = System.currentTimeMillis();
-        while (!isFinished) {
+//        System.out.println(isFinished + " finished");
+        while (active.get() != 0) {
+//            System.out.println(ready.size() + " size");
             if (ready.size() != 0) {
                 synchronized (ready) {
                     MessageBase message = ready.poll();
@@ -42,8 +47,15 @@ public class Engine {
                     self.tell(message, self);
                 }
             }
+//            System.out.println(ready.size() + " size");
         }
         return System.currentTimeMillis() - time;
+    }
+
+    public void add(MessageBase message) {
+        synchronized (ready) {
+            ready.add(message);
+        }
     }
 
 }
