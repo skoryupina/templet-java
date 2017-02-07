@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
 
-    public static final int SCALE = 5;
+    public static final int SCALE = 1500;
 
     public static final int W = SCALE * 2;
     public static final int H = SCALE;
@@ -110,9 +110,6 @@ public class Main {
 
         double time = System.currentTimeMillis();
         actors[0].tell(0, actors[0]);
-//        while (active.get() != 0) {
-//            System.out.println("active " + active);
-//        }
 //        return System.currentTimeMillis() - time;
     }
 
