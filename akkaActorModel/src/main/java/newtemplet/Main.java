@@ -3,17 +3,15 @@ package newtemplet;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import newtemplet.akka.ActorBase;
-import newtemplet.akka.Engine;
-import newtemplet.akka.MessageBase;
+import newtemplet.akka.Actor;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Main {
-    public int id;
 
-    public static final int SCALE = 1500;
+    public static final int SCALE = 5;
 
     public static final int W = SCALE * 2;
     public static final int H = SCALE;
@@ -25,6 +23,8 @@ public class Main {
 
     public static final int OBS_N = 19;
 
+    public static AtomicInteger active = new AtomicInteger(N);
+
     double obs_seq[];
     double seq_max, seq_mid, seq_min;
 
@@ -34,11 +34,8 @@ public class Main {
     double obs_tet[];
     double tet_max, tet_mid, tet_min;
 
-    public static Engine engine = new Engine();
     public static ActorRef actors[] = new ActorRef[N];
-    public static MessageBase messages[] = new MessageBase[N - 1];
     public static int time[] = new int[N];
-    final static ActorSystem system = ActorSystem.create("MySystem");
 
 
     public static void shufle() {
@@ -56,15 +53,18 @@ public class Main {
         double time = System.currentTimeMillis();
 
         for (int t = 1; t <= T; t++)
-            for (int i = 1; i < H - 1; i++) operation(i);
+            for (int i = 1; i < H - 1; i++) operation1(i);
 
         return System.currentTimeMillis() - time;
     }
 
-    boolean compare() {
+    static boolean compare() {
         for (int i = 0; i < H; i++)
             for (int j = 0; j < W; j++)
-                if (field1[i][j] != field[i][j]) return false;
+                if (field1[i][j] != field[i][j]) {
+                    System.out.println(field1[i][j]);
+                    System.out.println(field[i][j]);
+                }
         return true;
     }
 
@@ -88,32 +88,40 @@ public class Main {
         tet_mid = (tet_min + tet_max) / 2;
     }
 
+    public static void operation1(int i) {
+        for (int j = 1; j < W - 1; j++) {
+            field1[i][j] = (field1[i][j - 1] + field1[i][j + 1] + field1[i - 1][j] + field1[i + 1][j]) * 0.25;
+        }
+    }
+
     public static void operation(int i) {
         for (int j = 1; j < W - 1; j++) {
             field[i][j] = (field[i][j - 1] + field[i][j + 1] + field[i - 1][j] + field[i + 1][j]) * 0.25;
         }
     }
 
-    static double par_tet() {
+    static void par_tet() {
+        ActorSystem system = ActorSystem.create("Akka");
+
         for (int i = 0; i < N; i++) {
-            actors[i] = system.actorOf(Props.create(ActorBase.class, i));
+            actors[i] = system.actorOf(Props.create(Actor.class, i));
             time[i] = 1;
         }
-        for (int i = 0; i < N - 1; i++) {
-            messages[i] = new MessageBase();
-            messages[i].setActor(actors[i]);
-            messages[i].setSending(false);
-        }
-        MessageBase.send(engine, messages[0], actors[0]);
 
-        return engine.run();
+        double time = System.currentTimeMillis();
+        actors[0].tell(0, actors[0]);
+//        while (active.get() != 0) {
+//            System.out.println("active " + active);
+//        }
+//        return System.currentTimeMillis() - time;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         shufle();
-        seq_alg();
-        System.out.println(par_tet());
-        System.out.println("Print");
+        //seq_alg();
+        par_tet();
+//        System.out.println(par_tet());
+        System.out.println("equals " + compare());
 
 //            for (int i = 0; i < OBS_N; i++){
 //                shufle_seq();	obs_seq[i] = seq_alg();
