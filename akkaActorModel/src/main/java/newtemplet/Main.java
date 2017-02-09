@@ -6,12 +6,11 @@ import akka.actor.Props;
 import newtemplet.akka.Actor;
 
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Main {
 
-    public static final int SCALE = 1500;
+    public static final int SCALE = 5;
 
     public static final int W = SCALE * 2;
     public static final int H = SCALE;
@@ -23,7 +22,7 @@ public class Main {
 
     public static final int OBS_N = 19;
 
-    public static AtomicInteger active = new AtomicInteger(N);
+    public static ActorSystem system;
 
     double obs_seq[];
     double seq_max, seq_mid, seq_min;
@@ -100,8 +99,8 @@ public class Main {
         }
     }
 
-    static void par_tet() {
-        ActorSystem system = ActorSystem.create("Akka");
+    static double par_tet() {
+        system = ActorSystem.create("Akka");
 
         for (int i = 0; i < N; i++) {
             actors[i] = system.actorOf(Props.create(Actor.class, i));
@@ -110,15 +109,16 @@ public class Main {
 
         double time = System.currentTimeMillis();
         actors[0].tell(0, actors[0]);
-//        return System.currentTimeMillis() - time;
+        system.awaitTermination();
+        return System.currentTimeMillis() - time;
     }
 
     public static void main(String[] args) throws InterruptedException {
         shufle();
         //seq_alg();
-        par_tet();
+        System.out.println(par_tet());
 //        System.out.println(par_tet());
-        System.out.println("equals " + compare());
+//        System.out.println("equals " + compare());
 
 //            for (int i = 0; i < OBS_N; i++){
 //                shufle_seq();	obs_seq[i] = seq_alg();

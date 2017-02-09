@@ -20,7 +20,6 @@ public class Actor extends UntypedActor {
     public final void onReceive(Object message) throws Exception {
         if (((Integer) message) == id - 1) access_ms_id_minus_1 = true;
         if (((Integer) message) == id) access_ms_id = true;
-
         if ((id == 0 || access_ms_id_minus_1) &&
                 (id == N - 1 || access_ms_id) &&
                 (Main.time[id] <= Main.T)) {
@@ -35,9 +34,9 @@ public class Actor extends UntypedActor {
                 Main.actors[id + 1].tell(id, getSelf());
                 access_ms_id = false;
             }
-        } else if (Main.time[id] > Main.T) {
-            context().stop(getSelf());
-            Main.active.getAndDecrement();
+        }
+        if (Main.time[id] == Main.T && id == Main.actors.length - 1) {
+            Main.system.terminate();
         }
     }
 }
