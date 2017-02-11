@@ -7,17 +7,20 @@ import static newtemplet.Main.N;
 
 public class Actor extends UntypedActor {
 
-    private int id;
+    protected int id;
     private boolean access_ms_id_minus_1 = false;
     private boolean access_ms_id = true;
 
+    public Actor() {
+
+    }
 
     public Actor(int id) {
         this.id = id;
     }
 
     @Override
-    public final void onReceive(Object message) throws Exception {
+    public void onReceive(Object message) {
         if (((Integer) message) == id - 1) access_ms_id_minus_1 = true;
         if (((Integer) message) == id) access_ms_id = true;
         if ((id == 0 || access_ms_id_minus_1) &&

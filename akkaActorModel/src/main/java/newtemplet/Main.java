@@ -10,28 +10,25 @@ import java.util.Random;
 
 public class Main {
 
-    public static final int SCALE = 5;
+    private static final int SCALE = 600;
 
-    public static final int W = SCALE * 2;
-    public static final int H = SCALE;
+    private static final int W = SCALE * 2;
+    private static final int H = SCALE;
     public static final int T = SCALE * 2;
     public static final int N = H - 2;
 
-    public static double[][] field = new double[H][W];
-    public static double[][] field1 = new double[H][W];
+    private static double[][] field = new double[H][W];
+    private static double[][] field1 = new double[H][W];
 
-    public static final int OBS_N = 19;
+    private static final int OBS_N = 19;
 
     public static ActorSystem system;
 
-    double obs_seq[];
-    double seq_max, seq_mid, seq_min;
+    private static double obs_seq[] = new double[OBS_N];
+    private static double seq_max, seq_mid, seq_min;
 
-    double obs_omp[];
-    double omp_max, omp_mid, omp_min;
-
-    double obs_tet[];
-    double tet_max, tet_mid, tet_min;
+    private static double obs_akka[] = new double[OBS_N];
+    private static double akka_max, akka_mid, akka_min;
 
     public static ActorRef actors[] = new ActorRef[N];
     public static int time[] = new int[N];
@@ -48,43 +45,37 @@ public class Main {
         }
     }
 
-    static double seq_alg() {
-        double time = System.currentTimeMillis();
+    private static double seq_alg() {
+        long time = System.nanoTime();
 
         for (int t = 1; t <= T; t++)
             for (int i = 1; i < H - 1; i++) operation1(i);
-
-        return System.currentTimeMillis() - time;
+        return ((double) System.nanoTime() - time) / 1E9;
     }
 
-    static boolean compare() {
+    private static boolean compare() {
         for (int i = 0; i < H; i++)
             for (int j = 0; j < W; j++)
                 if (field1[i][j] != field[i][j]) {
-                    System.out.println(field1[i][j]);
-                    System.out.println(field[i][j]);
+                    System.out.println("\nWrong: i=" + i + ";j=" + j + "  seq=" + field1[i][j] + "  akka=" + field[i][j] + "\n");
+                    return false;
                 }
         return true;
     }
 
-    void min_max() {
+    private static void min_max() {
         seq_max = seq_min = obs_seq[0];
-        omp_max = omp_min = obs_omp[0];
-        tet_max = tet_min = obs_tet[0];
+        akka_max = akka_min = obs_akka[0];
 
         for (int i = 1; i < OBS_N; i++) {
             seq_max = obs_seq[i] > seq_max ? obs_seq[i] : seq_max;
             seq_min = obs_seq[i] < seq_min ? obs_seq[i] : seq_min;
 
-            omp_max = obs_omp[i] > omp_max ? obs_omp[i] : omp_max;
-            omp_min = obs_omp[i] < omp_min ? obs_omp[i] : omp_min;
-
-            tet_max = obs_tet[i] > tet_max ? obs_tet[i] : tet_max;
-            tet_min = obs_tet[i] < tet_min ? obs_tet[i] : tet_min;
+            akka_max = obs_akka[i] > akka_max ? obs_akka[i] : akka_max;
+            akka_min = obs_akka[i] < akka_min ? obs_akka[i] : akka_min;
         }
         seq_mid = (seq_min + seq_max) / 2;
-        omp_mid = (omp_min + omp_max) / 2;
-        tet_mid = (tet_min + tet_max) / 2;
+        akka_mid = (akka_min + akka_max) / 2;
     }
 
     public static void operation1(int i) {
@@ -99,7 +90,7 @@ public class Main {
         }
     }
 
-    static double par_tet() {
+    static double par_akka() {
         system = ActorSystem.create("Akka");
 
         for (int i = 0; i < N; i++) {
@@ -107,33 +98,26 @@ public class Main {
             time[i] = 1;
         }
 
-        double time = System.currentTimeMillis();
+        long time = System.nanoTime();
         actors[0].tell(0, actors[0]);
         system.awaitTermination();
-        return System.currentTimeMillis() - time;
+        return ((double) System.nanoTime() - time) / 1E9;
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        shufle();
-        //seq_alg();
-        System.out.println(par_tet());
-//        System.out.println(par_tet());
-//        System.out.println("equals " + compare());
+    public static void main(String[] args) {
+        for (int i = 0; i < OBS_N; i++) {
+            shufle();
+            obs_seq[i] = seq_alg();
+            obs_akka[i] = par_akka();
+            System.out.println(compare() ? "Akka Ok" : " something wrong in Akka");
+            System.out.println((int) ((float) (i + 1) / OBS_N * 100) + "% done");
+        }
 
-//            for (int i = 0; i < OBS_N; i++){
-//                shufle_seq();	obs_seq[i] = seq_alg();
-//                shufle();	obs_omp[i] = par_omp(); cout << (compare() ? "OMP Ok " : "something wrong in OMP ");
-//                shufle();	obs_tet[i] = par_tet(); cout << (compare() ? "Templet Ok " : "something wrong in Templet ");
-//                cout << (int)((float)(i+1)/OBS_N*100) << "% done" << endl;
-//            }
-//
-//            min_max();
-//
-//            cout << "\nTest results for H = " << H << "; W = " << W << "; T = " << T << "; OMP max threads  = " << omp_get_max_threads() << "\n";
-//
-//            cout << "\nseq_min  = " << seq_min << " sec; " << "\nseq_mid  = " << seq_mid <<" sec; \nseq_max  = " << seq_max << " sec\n";
-//            cout << "\nomp_min  = " << omp_min << " sec; " << "\nomp_mid  = " << omp_mid << " sec; \nomp_max  = " << omp_max << " sec\n";
-//            cout << "\ntet_min  = " << tet_min << " sec; " << "\ntet_mid  = " << tet_mid << " sec; \ntet_max  = " << tet_max << " sec\n";
+        min_max();
+
+        System.out.println("\nTest results for H = " + H + "; W = " + W + "; T = " + T);
+        System.out.println("\nseq_min  = " + seq_min + " sec; " + "\nseq_mid  = " + seq_mid + " sec; \nseq_max  = " + seq_max + " sec\n");
+        System.out.println("\nakka_min  = " + akka_min + " sec; " + "\nakka_mid  = " + akka_mid + " sec; \nakka_max  = " + akka_max + " sec\n");
     }
 
 
