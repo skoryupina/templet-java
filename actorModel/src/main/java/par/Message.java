@@ -14,7 +14,7 @@
 /*--------------------------------------------------------------------------*/
 package par;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Средство передачи знаний между акторами.
@@ -37,7 +37,10 @@ public class Message {
      * @param actor  Получатель сообщения.
      */
     public void send(Engine engine, Actor actor) {
-        engine.getReady().add(this);
+        synchronized (engine) {
+            engine.getReady().add(this);
+            engine.notify();
+        }
         this.sending = true;
         this.actor = actor;
     }
@@ -58,7 +61,7 @@ public class Message {
     /**
      * Получить актора-получателя сообщения.
      */
-    @Nullable
+    @NotNull
     Actor getActor() {
         return actor;
     }
@@ -66,7 +69,7 @@ public class Message {
     /**
      * После обработки сообщения, разрываем связь с актором.
      */
-    public void setActor(@Nullable Actor actor) {
+    public void setActor(@NotNull Actor actor) {
         this.actor = actor;
     }
 

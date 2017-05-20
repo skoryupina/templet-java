@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
  * Среда исполнения акторов.
  * Хранит пул потоков.
  */
-public class Engine {
+public class Engine implements Runnable {
 
     /**
      * Число потоков в пуле.
@@ -34,7 +34,7 @@ public class Engine {
     /**
      * Число потоков, активных в определенный момент времени.
      */
-    private volatile int active;
+    private volatile boolean finished;
 
     /**
      * Очередь сообщений, готовых к обработке акторами.
@@ -47,16 +47,27 @@ public class Engine {
         return ready;
     }
 
-    public void start() {
-        while (true) {
-            {
-                if (!ready.isEmpty()) {
-                    synchronized (ready) {
-                        Message message = ready.poll();
-                        Runnable worker = new Worker(message);
-                        threadPool.execute(worker);
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
+    }
+
+    public void run() {
+        while (!finished) {
+            synchronized (this) {
+                while (ready.isEmpty()) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
+                Message message = ready.poll();
+                Runnable worker = new Worker(message);
+                threadPool.execute(worker);
             }
         }
     }

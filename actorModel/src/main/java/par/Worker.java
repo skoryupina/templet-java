@@ -15,7 +15,6 @@
 package par;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +32,9 @@ class Worker implements Runnable {
 
     @Override
     public void run() {
-        if (message != null) {
-            LOG.debug("Запустили Worker'a:" + message.toString());
-            message.setSending(false);
-            @Nullable Actor actor = message.getActor();
-
-            assert actor != null;
-            actor.recv(message);
-        }
+        message.setSending(false);
+        @NotNull Actor actor = message.getActor();
+        actor.recv(message);
     }
 }
 

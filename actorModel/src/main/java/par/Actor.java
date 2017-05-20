@@ -14,6 +14,15 @@
 /*--------------------------------------------------------------------------*/
 package par;
 
-public interface Actor {
-    void recv(Message message);
+
+import org.jetbrains.annotations.NotNull;
+
+public abstract class Actor extends Thread {
+    private final Engine engine;
+
+    public Actor(@NotNull Engine engine) {
+        this.engine = engine;
+    }
+
+    public abstract void recv(Message message);
 }
