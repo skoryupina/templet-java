@@ -15,6 +15,7 @@
 
 package thread_pool;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import par.Actor;
@@ -76,8 +77,12 @@ public class ThreadPoolVersion {
     //endregion
 
 
-    public static class Master implements Actor {
+    public static class Master extends Actor {
         private double result;
+
+        public Master(@NotNull Engine engine) {
+            super(engine);
+        }
 
         public double getResult() {
             return result;
@@ -85,19 +90,20 @@ public class ThreadPoolVersion {
 
         public void recv(Message msg) {
 
-            if (messageSin.access(this, msg) && messageCos.access(this, msg) && result != 1) {
+            if (messageSin.access(this, messageSin) && messageCos.access(this, messageCos)) {
                 result = messageSin.SinX2 + messageCos.CosX2;
+                engine.setFinished(true);
                 LOG.debug("Result of calculations:" + result);
-
-                //Разрыв связи между актором и сообщением после обработки
-                messageSin.setActor(null);
-                messageCos.setActor(null);
             }
         }
     }
 
-    public static class WorkerSin implements Actor {
+    public static class WorkerSin extends Actor {
         private static int POW = 2;
+
+        public WorkerSin(@NotNull Engine engine) {
+            super(engine);
+        }
 
         @Override
         public void recv(Message msg) {
@@ -111,8 +117,12 @@ public class ThreadPoolVersion {
     }
 
 
-    public static class WorkerCos implements Actor {
+    public static class WorkerCos extends Actor {
         private static int POW = 2;
+
+        public WorkerCos(@NotNull Engine engine) {
+            super(engine);
+        }
 
         @Override
         public void recv(Message msg) {

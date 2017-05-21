@@ -12,63 +12,56 @@
 /*  See the License for the specific language governing permissions and     */
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
-
-package par;
+package engine_msg_queue;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-/**
- * Среда исполнения акторов.
- * Хранит пул потоков.
- */
-public class Engine implements Runnable {
+public abstract class Actor extends Thread {
+    Engine engine;
+    final Queue<Message> queue = new LinkedList<>();
 
-    /**
-     * Число потоков в пуле.
-     */
-    private static final int CAPACITY = 2;
+    abstract public void recv(Message message);
 
-    /**
-     * Число потоков, активных в определенный момент времени.
-     */
-    private volatile boolean finished;
-
-    /**
-     * Очередь сообщений, готовых к обработке акторами.
-     */
-    private final Queue<Message> ready = new LinkedList<>();
-
-    private ExecutorService threadPool = Executors.newFixedThreadPool(CAPACITY);
-
-    Queue<Message> getReady() {
-        return ready;
-    }
-
-    public boolean isFinished() {
-        return finished;
-    }
-
-    public void setFinished(boolean finished) {
-        this.finished = finished;
+    public void startActor() {
+        this.start();
     }
 
     public void run() {
-        while (!finished) {
+        Message msg;
+
+        for (; ; ) {
             synchronized (this) {
-                while (ready.isEmpty()) {
+                while (queue.isEmpty()) {
                     try {
                         wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                Message message = ready.poll();
-                Runnable worker = new Worker(message);
-                threadPool.execute(worker);
+                msg = queue.poll();
             }
+            msg.setSending(false);
+            recv(msg);
         }
+    }
+
+    public void finished() {
+        synchronized (engine) {
+            engine.setFinished(true);
+            engine.notify();
+        }
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    public Queue<Message> getQueue() {
+        return queue;
     }
 }

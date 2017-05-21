@@ -15,6 +15,8 @@
 package thread_pool;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import par.Engine;
 
 import static org.junit.Assert.assertEquals;
@@ -24,6 +26,8 @@ import static org.junit.Assert.assertEquals;
  */
 public class ThreadPoolVersionTest {
 
+    private static Logger LOG = LoggerFactory.getLogger(ThreadPoolVersionTest.class);
+
     /**
      * Значение для проверки тождества.
      */
@@ -31,31 +35,37 @@ public class ThreadPoolVersionTest {
 
     @Before
     public void beforeTests() {
-    }
-
-    @Test
-    public void isPythagoreanTrigonometricIdentity() {
-        final double DELTA = 1e-15;
+        ThreadPoolVersion.engine = new Engine();
 
         //region Actors initialization
-        ThreadPoolVersion.master = new ThreadPoolVersion.Master();
-        ThreadPoolVersion.workerSin = new ThreadPoolVersion.WorkerSin();
-        ThreadPoolVersion.workerCos = new ThreadPoolVersion.WorkerCos();
+        ThreadPoolVersion.master = new ThreadPoolVersion.Master(ThreadPoolVersion.engine);
+        ThreadPoolVersion.workerSin = new ThreadPoolVersion.WorkerSin(ThreadPoolVersion.engine);
+        ThreadPoolVersion.workerCos = new ThreadPoolVersion.WorkerCos(ThreadPoolVersion.engine);
         //endregion
 
         //region Messages initialization
         ThreadPoolVersion.messageSin = new ThreadPoolVersion.MessageSin();
         ThreadPoolVersion.messageCos = new ThreadPoolVersion.MessageCos();
-        ThreadPoolVersion.engine = new Engine();
 
         ThreadPoolVersion.messageSin.setX(VALUE);
         ThreadPoolVersion.messageCos.setX(VALUE);
         //endregion
+    }
 
+    @Test
+    public void isPythagoreanTrigonometricIdentity() throws InterruptedException {
+        final double DELTA = 1e-15;
 
         ThreadPoolVersion.messageSin.send(ThreadPoolVersion.engine, ThreadPoolVersion.workerSin);
         ThreadPoolVersion.messageCos.send(ThreadPoolVersion.engine, ThreadPoolVersion.workerCos);
-        ThreadPoolVersion.engine.start();
+
+        Thread thread = new Thread(ThreadPoolVersion.engine);
+        thread.start();
+        thread.join();
+
+        //Проверка тригонометрического тождества
+        LOG.debug("Результат проверки тригонометрического тождества: " + ThreadPoolVersion.master.getResult());
+
 
         //Проверка тригонометрического тождества
         assertEquals(ThreadPoolVersion.master.getResult(), 1, DELTA);

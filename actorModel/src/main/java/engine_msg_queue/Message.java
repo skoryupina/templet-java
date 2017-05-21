@@ -12,9 +12,9 @@
 /*  See the License for the specific language governing permissions and     */
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
-package par;
+package engine_msg_queue;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Средство передачи знаний между акторами.
@@ -33,13 +33,12 @@ public class Message {
     /**
      * Передать сообщение в очередь сообщений.
      *
-     * @param engine Движок - среда обитания акторов.
-     * @param actor  Получатель сообщения.
+     * @param actor Получатель сообщения.
      */
-    public void send(Engine engine, Actor actor) {
-        synchronized (engine) {
-            engine.getReady().add(this);
-            engine.notify();
+    public void send(Actor actor) {
+        synchronized (actor) {
+            actor.getQueue().add(this);
+            actor.notify();
         }
         this.sending = true;
         this.actor = actor;
@@ -61,7 +60,7 @@ public class Message {
     /**
      * Получить актора-получателя сообщения.
      */
-    @NotNull
+    @Nullable
     Actor getActor() {
         return actor;
     }
@@ -69,7 +68,7 @@ public class Message {
     /**
      * После обработки сообщения, разрываем связь с актором.
      */
-    public void setActor(@NotNull Actor actor) {
+    public void setActor(@Nullable Actor actor) {
         this.actor = actor;
     }
 

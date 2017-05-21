@@ -13,10 +13,12 @@
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
 
-package par;
+package engine_msg_queue;
+
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,7 +26,9 @@ import java.util.concurrent.Executors;
  * Среда исполнения акторов.
  * Хранит пул потоков.
  */
-public class Engine implements Runnable {
+public class Engine extends Thread {
+
+    org.slf4j.Logger LOG = LoggerFactory.getLogger(Engine.class);
 
     /**
      * Число потоков в пуле.
@@ -32,19 +36,33 @@ public class Engine implements Runnable {
     private static final int CAPACITY = 2;
 
     /**
-     * Число потоков, активных в определенный момент времени.
+     * Признек завершения вычислений
      */
     private volatile boolean finished;
 
-    /**
-     * Очередь сообщений, готовых к обработке акторами.
-     */
-    private final Queue<Message> ready = new LinkedList<>();
+    private List<Actor> listOfActors = new LinkedList<>();
 
     private ExecutorService threadPool = Executors.newFixedThreadPool(CAPACITY);
 
-    Queue<Message> getReady() {
-        return ready;
+    public void addActor(Actor actor) {
+        actor.setEngine(this);
+        listOfActors.add(actor);
+    }
+
+    public void run() {
+        for (Actor actor : listOfActors) {
+            actor.startActor();
+        }
+
+        while (!finished) {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public boolean isFinished() {
@@ -53,22 +71,5 @@ public class Engine implements Runnable {
 
     public void setFinished(boolean finished) {
         this.finished = finished;
-    }
-
-    public void run() {
-        while (!finished) {
-            synchronized (this) {
-                while (ready.isEmpty()) {
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                Message message = ready.poll();
-                Runnable worker = new Worker(message);
-                threadPool.execute(worker);
-            }
-        }
     }
 }
