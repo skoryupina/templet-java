@@ -43,13 +43,20 @@ public class Message {
      */
     public void send(Engine engine, Message message, Actor actor) {
         LOG.debug("---   " + actor.id);
-        synchronized (engine.getReady()) {
+        synchronized (engine) {
             message.sending = true;
             message.actor = actor;
             engine.getReady().add(message);
-            LOG.debug("size: {} Добавили в очередь message id: {} messageActor: {} actorID: {} ", engine.getReady().size(), message.id, message.actor.id, actor.id);
+            engine.notify();
         }
     }
+//        synchronized (engine.getReady()) {
+//            this.sending = true;
+//            this.actor = actor;
+//            engine.getReady().add(this);
+//            LOG.debug("size: {} Добавили в очередь message id: {} messageActor: {} actorID: {} ", engine.getReady().size(), message.id, message.actor.id, actor.id);
+//        }
+//    }
 
     /**
      * Проверка доступа актора к сообщению.
@@ -61,7 +68,7 @@ public class Message {
      * @return Есть ли право доступа.
      */
     public boolean access(Message message, Actor actor) {
-        LOG.debug("message.actor==actor {} : {} !message.sending {} ", message.actor.id, actor.id, !message.sending);
+//        LOG.debug("message.actor==actor {} : {} !message.sending {} ", message.actor.id, actor.id, !message.sending);
         return message.actor == actor && !message.sending;
     }
 
@@ -71,5 +78,21 @@ public class Message {
                 "actor=" + actor +
                 ", sending=" + sending +
                 '}';
+    }
+
+    public boolean isSending() {
+        return sending;
+    }
+
+    public void setSending(boolean sending) {
+        this.sending = sending;
+    }
+
+    public Actor getActor() {
+        return actor;
+    }
+
+    public void setActor(Actor actor) {
+        this.actor = actor;
     }
 }

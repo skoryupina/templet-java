@@ -16,6 +16,7 @@ package gauss_seidel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import seq.Actor;
 import seq.Engine;
 import seq.Message;
@@ -61,39 +62,100 @@ public class ActorVersion {
         for (int i = 0; i < N - 1; i++) {
             m[i] = new MessageGauss(i);
             m[i].id = i;
-            m[i].send(engine, m[i], a[i]); //отправляем сообщение i-му актору
+//            m[i].send(engine, m[i], a[i]); //отправляем сообщение i-му актору
             m[i].sending = (i == 0);
         }
+        m[0].send(engine, m[0], a[0]); //отправляем сообщение 0-му актору
 
         engine.run();
     }
 
     static class GaussSeidelActor extends Actor {
+        private boolean access_ms_id_minus_1 = false;
+        private boolean access_ms_id = true;
+//
+//             if (((Integer) message) == id - 1) access_ms_id_minus_1 = true;
+//        if (((Integer) message) == id) access_ms_id = true;
+//        if ((id == 0 || access_ms_id_minus_1) &&
+//                (id == N - 1 || access_ms_id) &&
+//                (Main.time[id] <= Main.T)) {
+//            Main.operation(id + 1);
+//            Main.time[id]++;
+//
+//            if (id != 0) {
+//                Main.actors[id - 1].tell(id - 1, getSelf());
+//                access_ms_id_minus_1 = false;
+//            }
+//            if (id != Main.N - 1) {
+//                Main.actors[id + 1].tell(id, getSelf());
+//                access_ms_id = false;
+//            }
+//        }
+//        if (Main.time[id] == Main.T && id == Main.actors.length - 1) {
+//            Main.system.terminate();
+//        }
+
 
         @Override
-        public void recv(Message message, Actor actor) {
-            LOG.error("actor " + actor.id);
+        public void recv(Message message) {
+            LOG.error("actor " + this.id);
             LOG.debug(Thread.currentThread().getName());
             MessageGauss msg = (MessageGauss) message;
             int i = msg.getX();
-            LOG.debug("i== {}", i);
-            if ((i == 0 ||
-                    message.access(m[i - 1], a[i])) &&
-                            (i == N - 1 || message.access(m[i], a[i])) &&
-                    (t[i] <= InputMatrixHelper.ITERATIONS)) {
-                operation(i + 1);
-                t[i]++;
-                if (i != 0) {
-                    LOG.debug(Thread.currentThread().getName() + " vetv i != 0 ");
-                    message.send(a[i - 1].engine, m[i - 1], a[i - 1]);
+            if (i == id - 1) access_ms_id_minus_1 = true;
+            if (i == id) access_ms_id = true;
+
+            MDC.put("id", String.valueOf(id));
+            LOG.debug("**check conditions***** for id: " + id + "  msg: " + msg.getX());
+            LOG.debug("*1*" + (id == 0 || access_ms_id_minus_1));
+            LOG.debug("*2*" + (id == N - 1 || access_ms_id));
+            LOG.debug("*3*" + (t[id] <= InputMatrixHelper.ITERATIONS));
+            LOG.debug("************************");
+
+
+            if ((id == 0 || access_ms_id_minus_1) &&
+                    (id == N - 1 || access_ms_id) &&
+                    (t[id] <= InputMatrixHelper.ITERATIONS)) {
+                LOG.debug("****************************");
+
+                operation(id + 1);
+                t[id]++;
+
+                if (id != 0) {
+                    message.send(a[id - 1].engine, m[id - 1], a[id - 1]);
+                    LOG.debug("1 send " + (id - 1));
+                    access_ms_id_minus_1 = false;
                 }
-                if (i != N - 1) {
-                    LOG.debug(Thread.currentThread().getName() + " vetv i != N - 1");
-                    ((MessageGauss) message).from = "i != N - 1";
-                    message.send(a[i + 1].engine, m[i + 1], a[i + 1]);
-                    LOG.debug(((MessageGauss) message).from);
+                if (id != N - 1) {
+                    message.send(a[id + 1].engine, m[id], a[id + 1]);
+                    LOG.debug("2 send " + (id + 1));
+                    access_ms_id = false;
                 }
             }
+            if (t[id] == InputMatrixHelper.ITERATIONS && id == N - 1) {
+                a[id].engine.setFinished(true);
+            }
+
+
+//            int i = msg.getX();
+//            LOG.debug("i== {}", i);
+//            if ((i == 0 ||
+//                    message.access(m[i - 1], a[i])) &&
+//                            (i == N - 1 || message.access(m[i], a[i])) &&
+//                    (t[i] <= InputMatrixHelper.ITERATIONS)) {
+//                operation(i + 1);
+//                t[i]++;
+//                if (i != 0) {
+//                    LOG.debug(Thread.currentThread().getName() + " vetv i != 0 ");
+//                    message.send(a[i - 1].engine, m[i - 1], a[i - 1]);
+//                }
+//                if (i != N - 1) {
+//                    LOG.debug(Thread.currentThread().getName() + " vetv i != N - 1");
+//                    ((MessageGauss) message).from = "i != N - 1";
+//                    message.send(a[i + 1].engine, m[i + 1], a[i + 1]);
+//                    LOG.debug(((MessageGauss) message).from);
+//                }
+//            }
         }
 
     }

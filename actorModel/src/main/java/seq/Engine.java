@@ -23,6 +23,9 @@ import java.util.Queue;
 public class Engine {
 
     Logger LOG = LoggerFactory.getLogger(Engine.class);
+
+    private volatile boolean finished;
+
     /**
      * Очередь сообщений, готовых к обработке акторами.
      */
@@ -32,13 +35,35 @@ public class Engine {
         return ready;
     }
 
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
+    }
+
     public void run() {
-        while (ready.size() != 0) {
-            synchronized (ready) {
-                Message message = ready.poll();
-                message.sending = false;
-                message.actor.recv(message, message.actor);
+        while (!finished) {
+            synchronized (this) {
+                while (ready.isEmpty()) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+                Message message = ready.poll();
+                Thread worker = new Worker(message);
+                worker.start();
+            }
         }
+//        while (ready.size() != 0) {
+//            synchronized (ready) {
+//                Message message = ready.poll();
+//                message.sending = false;
+//                message.actor.recv(message, message.actor);
+//                }
+//        }
     }
 }

@@ -19,7 +19,7 @@ public abstract class Actor implements Runnable {
     //для отладки
     public int id;
 
-    public abstract void recv(Message message, Actor actor);
+    public abstract void recv(Message message);
 
     public void run() {
     }
