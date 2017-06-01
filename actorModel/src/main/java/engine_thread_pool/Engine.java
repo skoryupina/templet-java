@@ -12,10 +12,12 @@
 /*  See the License for the specific language governing permissions and     */
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
-package seq;
+package engine_thread_pool;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Engine {
@@ -23,9 +25,16 @@ public class Engine {
     private AtomicBoolean finished = new AtomicBoolean(false);
 
     /**
+     * Число потоков в пуле.
+     */
+    private static final int CAPACITY = 10;
+
+    /**
      * Очередь сообщений, готовых к обработке акторами.
      */
     private final Queue<Message> ready = new LinkedList<>();
+
+    private ExecutorService threadPool = Executors.newWorkStealingPool();
 
     Queue<Message> getReady() {
         return ready;
@@ -50,8 +59,8 @@ public class Engine {
                     }
                 }
                 Message message = ready.poll();
-                Thread worker = new Worker(message);
-                worker.start();
+                Runnable worker = new Worker(message);
+                threadPool.execute(worker);
             }
         }
     }

@@ -12,24 +12,22 @@
 /*  See the License for the specific language governing permissions and     */
 /*  limitations under the License.                                          */
 /*--------------------------------------------------------------------------*/
-package gauss_seidel;
+package engine_thread_pool;
 
-import org.junit.Before;
-import org.junit.Test;
+public abstract class Actor implements Runnable {
+    public Engine engine;
+    //для отладки
+    public int id;
 
-public class ActorVersionTest {
-    private static final String FILENAME = "matrix.dat";
-    private InputMatrixHelper inputMatrixHelper;
+    public abstract void recv(Message message);
 
-    @Before
-    public void beforeTests() {
-        inputMatrixHelper = InputMatrixHelper.deserializeMatrix(FILENAME);
+    public void run() {
     }
 
-    @Test
-    public void isCalculated() {
-        double[][] result = ActorVersion.calcWithActors(inputMatrixHelper.getU());
-        InputMatrixHelper resultMatrix = new InputMatrixHelper(result);
-        InputMatrixHelper.serializeMatrix("actorResult.dat", resultMatrix);
+    @Override
+    public String toString() {
+        return "Actor{" +
+                "engine=" + engine +
+                '}';
     }
 }

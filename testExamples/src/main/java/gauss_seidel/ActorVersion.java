@@ -16,7 +16,6 @@ package gauss_seidel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import seq.Actor;
 import seq.Engine;
 import seq.Message;
@@ -25,7 +24,7 @@ public class ActorVersion {
     static Logger LOG = LoggerFactory.getLogger(ActorVersion.class);
 
     public static Actor[] a;
-    public static MessageGauss[] m;
+    public static ActorVersion.MessageGauss[] m;
     //служит для отметки моментов времени
     public static int[] t;
     private static double[][] u;
@@ -33,46 +32,48 @@ public class ActorVersion {
     public static final int N = InputMatrixHelper.SIZE_Y - 2;
 
 
-    public static void calcWithActors(double[][] u) {
+    public static double[][] calcWithActors(double[][] u) {
         Engine engine = new Engine();
-        a = new GaussSeidelActor[N];
-//        LOG.debug("a size " + a.length);
-        m = new MessageGauss[N - 1];
-//        LOG.debug("m size " + m.length);
+        a = new ActorVersion.GaussSeidelActor[N];
+////        LOG.debug("a size " + a.length);
+        m = new ActorVersion.MessageGauss[N - 1];
+////        LOG.debug("m size " + m.length);
         t = new int[N];
-//        LOG.debug("t size " + t.length);
+////        LOG.debug("t size " + t.length);
         ActorVersion.u = u;
-
-        /***
-         * Инициализация массива акторов
-         */
-
+//
+//        /***
+//         * Инициализация массива акторов
+//         */
+//
         for (int i = 0; i < N; i++) {
             a[i] = new GaussSeidelActor();
             a[i].id = i;
             t[i] = 1;
             a[i].engine = engine;
-            Thread thread = new Thread(a[i], String.valueOf(a[i].id));
-            thread.start();
+//            Thread thread = new Thread(a[i], String.valueOf(a[i].id));
+//            thread.start();
         }
-
-        /***
-         * Инициализация массива сообщений
-         */
+//
+//        /***
+//         * Инициализация массива сообщений
+//         */
         for (int i = 0; i < N - 1; i++) {
             m[i] = new MessageGauss(i);
             m[i].id = i;
 //            m[i].send(engine, m[i], a[i]); //отправляем сообщение i-му актору
             m[i].sending = (i == 0);
+//        }
+            m[0].send(engine, m[0], a[0]); //отправляем сообщение 0-му актору
+//
+//        engine.run();
+//        return ActorVersion.u;
+            return null;
         }
-        m[0].send(engine, m[0], a[0]); //отправляем сообщение 0-му актору
 
-        engine.run();
-    }
-
-    static class GaussSeidelActor extends Actor {
-        private boolean access_ms_id_minus_1 = false;
-        private boolean access_ms_id = true;
+        public static class GaussSeidelActor extends Actor {
+            private boolean access_ms_id_minus_1 = false;
+            private boolean access_ms_id = true;
 //
 //             if (((Integer) message) == id - 1) access_ms_id_minus_1 = true;
 //        if (((Integer) message) == id) access_ms_id = true;
@@ -96,45 +97,60 @@ public class ActorVersion {
 //        }
 
 
-        @Override
-        public void recv(Message message) {
-            LOG.error("actor " + this.id);
-            LOG.debug(Thread.currentThread().getName());
-            MessageGauss msg = (MessageGauss) message;
-            int i = msg.getX();
-            if (i == id - 1) access_ms_id_minus_1 = true;
-            if (i == id) access_ms_id = true;
+            @Override
+            public void recv(Message message) {
+//            LOG.error("actor " + this.id);
+//            LOG.debug(Thread.currentThread().getName());
+                MessageGauss msg = (MessageGauss) message;
+                int i = msg.getX();
+                if (i == id - 1) access_ms_id_minus_1 = true;
+                if (i == id) access_ms_id = true;
 
-            MDC.put("id", String.valueOf(id));
-            LOG.debug("**check conditions***** for id: " + id + "  msg: " + msg.getX());
-            LOG.debug("*1*" + (id == 0 || access_ms_id_minus_1));
-            LOG.debug("*2*" + (id == N - 1 || access_ms_id));
-            LOG.debug("*3*" + (t[id] <= InputMatrixHelper.ITERATIONS));
-            LOG.debug("************************");
+//            MDC.put("id", String.valueOf(id));
+//            LOG.debug("**check conditions***** for id: " + id + "  msg: " + msg.getX());
+//            LOG.debug("*1*" + (id == 0 || access_ms_id_minus_1));
+//            LOG.debug("*2*" + (id == N - 1 || access_ms_id));
+//            LOG.debug("*3*" + "t[" + id + "]=" + t[id] + "  " + (t[id] <= InputMatrixHelper.ITERATIONS));
+//            LOG.debug("************************");
 
 
-            if ((id == 0 || access_ms_id_minus_1) &&
-                    (id == N - 1 || access_ms_id) &&
-                    (t[id] <= InputMatrixHelper.ITERATIONS)) {
-                LOG.debug("****************************");
+//            if ((id == 0 || access_ms_id_minus_1) &&
+//                    (id == N - 1 || access_ms_id) &&
+//                    (t[id] <= InputMatrixHelper.ITERATIONS)) {
+//                LOG.debug("****************************");
+//
+//                operation(id + 1);
+//                t[id]++;
+                if ((id == 0 || access_ms_id_minus_1) &&
+                        (id == N - 1 || access_ms_id) &&
+                        (Main.time[id] <= Main.T)) {
+                    Main.operation(id + 1);
+                    Main.time[id]++;
+                    System.out.println(id + "  " + String.valueOf(Main.time[id]));
 
-                operation(id + 1);
-                t[id]++;
+                    if (id != 0) {
+                        access_ms_id_minus_1 = false;
+//                    message.send(a[id - 1].engine, m[id - 1], a[id - 1]);
+                        LOG.debug("1 send **id != 0** сообщение: " + m[id - 1].getX() + " актор № " + (id - 1));
+//                    System.out.println("Send " + id);
 
-                if (id != 0) {
-                    message.send(a[id - 1].engine, m[id - 1], a[id - 1]);
-                    LOG.debug("1 send " + (id - 1));
-                    access_ms_id_minus_1 = false;
+                    }
+                    if (id != N - 1) {
+                        access_ms_id = false;
+//                    message.send(a[id + 1].engine, m[id], a[id + 1]);
+                        LOG.debug("2 **id != N - 1** сообщение: " + (m[id].getX()) + " актор № " + (id + 1));
+                        //System.out.println("Send " + id);
+
+                    }
                 }
-                if (id != N - 1) {
-                    message.send(a[id + 1].engine, m[id], a[id + 1]);
-                    LOG.debug("2 send " + (id + 1));
-                    access_ms_id = false;
+                if (Main.time[id] == Main.T && id == a.length - 1) {
+                    System.out.println("finished " + id);
+                    a[id].engine.setFinished(true);
                 }
-            }
-            if (t[id] == InputMatrixHelper.ITERATIONS && id == N - 1) {
-                a[id].engine.setFinished(true);
-            }
+//            if (t[id] == InputMatrixHelper.ITERATIONS && id == N - 1) {
+//                System.out.println("finished " + id);
+//                a[id].engine.setFinished(true);
+//            }
 
 
 //            int i = msg.getX();
@@ -156,18 +172,16 @@ public class ActorVersion {
 //                    LOG.debug(((MessageGauss) message).from);
 //                }
 //            }
+            }
+
         }
 
-    }
-
-    private static class MessageGauss extends Message {
+        public static class MessageGauss extends Message {
         int x;
 
-        MessageGauss(int i) {
+            public MessageGauss(int i) {
             x = i;
         }
-
-        String from;
 
         int getX() {
             return x;
