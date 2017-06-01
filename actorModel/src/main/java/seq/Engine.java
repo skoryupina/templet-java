@@ -58,12 +58,5 @@ public class Engine {
                 worker.start();
             }
         }
-//        while (ready.size() != 0) {
-//            synchronized (ready) {
-//                Message message = ready.poll();
-//                message.sending = false;
-//                message.actor.recv(message, message.actor);
-//                }
-//        }
     }
 }

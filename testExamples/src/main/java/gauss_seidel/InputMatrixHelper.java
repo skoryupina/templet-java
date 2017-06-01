@@ -26,8 +26,8 @@ public class InputMatrixHelper implements Serializable {
     static Logger LOG = LoggerFactory.getLogger(InputMatrixHelper.class);
 
     public static final int SIZE_X = 800;
-    public static final int SIZE_Y = 80;
-    public static final int ITERATIONS = 10000;
+    public static final int SIZE_Y = 10;
+    public static final int ITERATIONS = 50;
 
     private double[][] u;
 
